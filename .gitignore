@@ -64,3 +64,4 @@ fabric.properties
 /.idea/
 /logs/
 *.iml
+/target/
