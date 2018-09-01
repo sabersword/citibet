@@ -1,0 +1,168 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+                        http://www.springframework.org/schema/beans/spring-beans.xsd
+                        http://www.springframework.org/schema/context 
+                        http://www.springframework.org/schema/context/spring-context.xsd
+                        http://www.springframework.org/schema/aop 
+                        http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <context:annotation-config/>
+
+    <!-- 登录bean -->
+	<bean id="login" class="org.ypq.newcitibet.task.Login"></bean>
+
+    <!-- httpclient类 -->
+	<bean id="httpClient" class="okhttp3.OkHttpClient">
+	</bean>
+    
+    <!-- 界面bean -->
+    <bean id="frame" class="javax.swing.JFrame"></bean>
+    
+    <!-- 工具类,需要注入frame -->
+    <bean id="citibetUtils" class="org.ypq.newcitibet.utils.CitibetUtils">
+        <property name="container" ref="frame"></property>
+        <property name="client" ref="httpClient"></property>
+    </bean>
+    
+    <!-- 主界面bean -->
+    <bean id="citibetWindow" class="org.ypq.newcitibet.ui.CitibetWindow"></bean>
+    
+    <!-- 6种形式的下单开关 -->
+    <bean id="allowWinBet" class="java.util.concurrent.atomic.AtomicBoolean"></bean>
+    <bean id="allowWinEat" class="java.util.concurrent.atomic.AtomicBoolean"></bean>
+    <bean id="allowPlaceBet" class="java.util.concurrent.atomic.AtomicBoolean"></bean>
+    <bean id="allowPlaceEat" class="java.util.concurrent.atomic.AtomicBoolean"></bean>
+    <bean id="allowFollowWinBet" class="java.util.concurrent.atomic.AtomicBoolean"></bean>
+    <bean id="allowFollowWinEat" class="java.util.concurrent.atomic.AtomicBoolean"></bean>
+    
+    <bean id="space2PlusDocument" class="org.ypq.newcitibet.event.Space2PlusDocument" scope="prototype"></bean>
+    <bean id="multiHorseAdapter" class="org.ypq.newcitibet.event.MultiHorseAdapter"></bean>
+    
+    <!-- 主界面Button的控制器 -->
+    <bean id="winBetBtnHandler" class="org.ypq.newcitibet.event.ButtonHandler">
+        <property name="bes" ref="winBetStatus"></property>
+    </bean>
+    <bean id="winEatBtnHandler" class="org.ypq.newcitibet.event.ButtonHandler">
+        <property name="bes" ref="winEatStatus"></property>
+    </bean>
+    <bean id="placeBetBtnHandler" class="org.ypq.newcitibet.event.ButtonHandler">
+        <property name="bes" ref="placeBetStatus"></property>
+    </bean>
+    <bean id="placeEatBtnHandler" class="org.ypq.newcitibet.event.ButtonHandler">
+        <property name="bes" ref="placeEatStatus"></property>
+    </bean>
+    <bean id="followWinBetBtnHandler" class="org.ypq.newcitibet.event.ButtonHandler">
+        <property name="bes" ref="followWinBetStatus"></property>
+    </bean>
+    <bean id="followWinEatBtnHandler" class="org.ypq.newcitibet.event.ButtonHandler">
+        <property name="bes" ref="followWinEatStatus"></property>
+    </bean>
+    
+    <!-- 定时任务类,用于运行citibet所有定时任务 -->
+    <bean id="citibetTask" class="org.ypq.newcitibet.timer.CitibetTask">
+        <property name="taskQueue">
+            <list>
+                <ref bean="getAndShowWinBet"/>
+                <ref bean="getAndShowWinEat"/>
+                <ref bean="getAndShowPlaceBet"/>
+                <ref bean="getAndShowPlaceEat"/>
+                <ref bean="getOrder"/>
+                <ref bean="betWinOrder"/>
+                <ref bean="eatWinOrder"/>
+                <ref bean="betPlaceOrder"/>
+                <ref bean="eatPlaceOrder"/>
+                <ref bean="followBetWinOrder"/>
+                <ref bean="followEatWinOrder"/>
+            </list>
+        </property>
+    </bean>
+    
+    
+    <!-- 6个所有不同形式的记录下单状态的bean -->
+	<bean id="winBetStatus" class="org.ypq.newcitibet.data.BetEatStatus">
+		<property name="type" ref="org.ypq.newcitibet.data.Type.WIN_BET"></property>
+		<property name="isAllow" ref="allowWinBet"></property>
+	</bean>
+	<bean id="winEatStatus" class="org.ypq.newcitibet.data.BetEatStatus">
+		<property name="type" ref="org.ypq.newcitibet.data.Type.WIN_EAT"></property>
+		<property name="isAllow" ref="allowWinEat"></property>
+	</bean>
+	<bean id="placeBetStatus" class="org.ypq.newcitibet.data.BetEatStatus">
+		<property name="type" ref="org.ypq.newcitibet.data.Type.PLACE_BET"></property>
+		<property name="isAllow" ref="allowPlaceBet"></property>
+	</bean>
+	<bean id="placeEatStatus" class="org.ypq.newcitibet.data.BetEatStatus">
+		<property name="type" ref="org.ypq.newcitibet.data.Type.PLACE_EAT"></property>
+		<property name="isAllow" ref="allowPlaceEat"></property>
+	</bean>
+	<bean id="followWinBetStatus" class="org.ypq.newcitibet.data.BetEatStatus">
+        <property name="type" ref="org.ypq.newcitibet.data.Type.FOLLOW_WIN_BET"></property>
+        <property name="isAllow" ref="allowFollowWinBet"></property>
+    </bean>
+    <bean id="followWinEatStatus" class="org.ypq.newcitibet.data.BetEatStatus">
+        <property name="type" ref="org.ypq.newcitibet.data.Type.FOLLOW_WIN_EAT"></property>
+        <property name="isAllow" ref="allowFollowWinEat"></property>
+    </bean>
+    
+	
+    <!-- 4个获取数据的bean -->
+    <bean id="getAndShowWinBet" class="org.ypq.newcitibet.task.GetAndShowData">
+        <property name="type" ref="org.ypq.newcitibet.data.Type.WIN_BET"></property>
+        <property name="tableName" value="qWinBetTable"></property>
+    </bean>
+    <bean id="getAndShowWinEat" class="org.ypq.newcitibet.task.GetAndShowData">
+        <property name="type" ref="org.ypq.newcitibet.data.Type.WIN_EAT"></property>
+        <property name="tableName" value="qWinEatTable"></property>
+    </bean>
+    <bean id="getAndShowPlaceBet" class="org.ypq.newcitibet.task.GetAndShowData">
+        <property name="type" ref="org.ypq.newcitibet.data.Type.PLACE_BET"></property>
+        <property name="tableName" value="qPlaceBetTable"></property>
+    </bean>
+    <bean id="getAndShowPlaceEat" class="org.ypq.newcitibet.task.GetAndShowData">
+        <property name="type" ref="org.ypq.newcitibet.data.Type.PLACE_EAT"></property>
+        <property name="tableName" value="qPlaceEatTable"></property>
+    </bean>
+    
+    
+    <!-- 获取订单的bean -->
+    <bean id="getOrder" class="org.ypq.newcitibet.task.GetOrder"></bean>
+    
+    
+    <!-- 赌吃的6个bean -->
+    <bean id="betWinOrder" class="org.ypq.newcitibet.task.BetAndEatOrder">
+        <property name="type" ref="org.ypq.newcitibet.data.Type.WIN_BET"></property>
+        <property name="status" ref="winBetStatus"></property>
+    </bean>
+    <bean id="eatWinOrder" class="org.ypq.newcitibet.task.BetAndEatOrder">
+        <property name="type" ref="org.ypq.newcitibet.data.Type.WIN_EAT"></property>
+        <property name="status" ref="winEatStatus"></property>
+    </bean>
+    <bean id="betPlaceOrder" class="org.ypq.newcitibet.task.BetAndEatOrder">
+        <property name="type" ref="org.ypq.newcitibet.data.Type.PLACE_BET"></property>
+        <property name="status" ref="placeBetStatus"></property>
+    </bean>
+    <bean id="eatPlaceOrder" class="org.ypq.newcitibet.task.BetAndEatOrder">
+        <property name="type" ref="org.ypq.newcitibet.data.Type.PLACE_EAT"></property>
+        <property name="status" ref="placeEatStatus"></property>
+    </bean>
+    <bean id="followBetWinOrder" class="org.ypq.newcitibet.task.BetAndEatOrder">
+        <property name="type" ref="org.ypq.newcitibet.data.Type.FOLLOW_WIN_BET"></property>
+        <property name="status" ref="followWinBetStatus"></property>
+    </bean>
+    <bean id="followEatWinOrder" class="org.ypq.newcitibet.task.BetAndEatOrder">
+        <property name="type" ref="org.ypq.newcitibet.data.Type.FOLLOW_WIN_EAT"></property>
+        <property name="status" ref="followWinEatStatus"></property>
+    </bean>
+    
+    
+    <!-- Type枚举类型中对应的6个枚举常量 -->
+    <bean id="org.ypq.newcitibet.data.Type.WIN_BET" class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean"></bean>
+    <bean id="org.ypq.newcitibet.data.Type.WIN_EAT" class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean"></bean>
+    <bean id="org.ypq.newcitibet.data.Type.PLACE_BET" class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean"></bean>
+    <bean id="org.ypq.newcitibet.data.Type.PLACE_EAT" class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean"></bean>
+    <bean id="org.ypq.newcitibet.data.Type.FOLLOW_WIN_BET" class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean"></bean>
+    <bean id="org.ypq.newcitibet.data.Type.FOLLOW_WIN_EAT" class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean"></bean>
+    
+</beans>
